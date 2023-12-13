@@ -2,7 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 
 const app = express();
-const PORT = 3001;
+const PORT = 443;
 
 // Sample data
 let counties = [
