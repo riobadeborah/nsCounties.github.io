@@ -1,0 +1,18 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+    position: relative; /* Make body a positioning context */
+}
+
+h1 {
+    color: #333;
+}
+
+/* Add styling for the Nova Scotia flag */
+.ns-flag {
+    position: absolute;
+    top: 100px; 
+    right: 100px; 
+    width: 100px; 
+    height: auto; 
+}
