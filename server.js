@@ -1,44 +1,66 @@
 const express = require('express');
+const fetch = require('node-fetch');
 const app = express();
-const fs = require('fs');
-
-const counties = require('./counties.json');
-
-// Endpoint to get all counties
-app.get('/counties', (req, res) => {
-  res.json(counties);
-});
-
-// Endpoint to get details of a specific county by name
-app.get('/counties/:name', (req, res) => {
-  const countyName = req.params.name;
-  const county = counties.find((county) => county.name === countyName);
-
-  if (county) {
-    res.json(county);
-  } else {
-    res.status(404).json({ error: 'County not found' });
-  }
-});
-
-// Endpoint to update the details of a specific county by name
-app.post('/counties/:name', (req, res) => {
-  const countyName = req.params.name;
-  const updatedCounty = req.body;
-
-  const index = counties.findIndex((county) => county.name === countyName);
-
-  if (index !== -1) {
-    counties[index] = updatedCounty;
-    res.json({ message: 'County updated successfully' });
-  } else {
-    res.status(404).json({ error: 'County not found' });
-  }
-});
-
 const port = 3005;
 
-// Start the server
+// Load environment variables from a .env file (make sure to add .env to your .gitignore)
+require('dotenv').config();
+
+const jsonBinUrl = 'https://api.jsonbin.io/v3/b/657a1b59266cfc3fde6873a9/latest';
+const masterKey = process.env.JSONBIN_MASTER_KEY;
+
+app.use(express.json());
+
+// Middleware to check if the master key is provided in the request headers
+const checkMasterKey = (req, res, next) => {
+  const providedKey = req.headers['x-master-key'];
+
+  if (!providedKey || providedKey !== masterKey) {
+    return res.status(403).json({ error: 'Unauthorized' });
+  }
+
+  next();
+};
+
+// Endpoint to get all counties using the JSONBin API
+app.get('/counties', checkMasterKey, async (req, res) => {
+  try {
+    const response = await fetch(jsonBinUrl, {
+      headers: {
+        'X-Master-Key': masterKey,
+      },
+    });
+    const data = await response.json();
+    res.json(data);
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// Endpoint to get details of a specific county by name using the JSONBin API
+app.get('/counties/:name', checkMasterKey, async (req, res) => {
+  const countyName = req.params.name;
+
+  try {
+    const response = await fetch(`${jsonBinUrl}/${countyName}`, {
+      headers: {
+        'X-Master-Key': masterKey,
+      },
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      res.json(data);
+    } else {
+      res.status(response.status).json({ error: 'County not found' });
+    }
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
+  console.log(`Server is running on https://api.jsonbin.io/v3/b/657a1b59266cfc3fde6873a9/latest`);
 });
